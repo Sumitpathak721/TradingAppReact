@@ -1,45 +1,48 @@
 import React, { useState } from 'react'; // Import useState for controlled inputs 
-import { useAuth } from '../context/auth'; // Import the useAuth hook
-import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/auth.js'; // Import the useAuth hook
+import { Link, Navigate } from 'react-router-dom';
+import { toast } from "react-toastify";
+
+import axios from "axios"
+import "../styles/auth.css"
 
 function Login() {
   const [auth, setAuth] = useAuth();
-  // Declare state variables for username and token
-  const [username, setUsername] = useState('');
-  const [token, setToken] = useState('');
 
-  const handleSubmitEvent = (e) => {
-    e.preventDefault();
+  const handleSubmit = async(event) => {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const {data} = await axios.post('/login', formData);
 
-    // Access form values using state variables
-    if (username !== "" && token !== "") {
-      const data = { user: { name: username }, token }
-      setAuth(data); // Update state
-      return;
+    if (data.status==200){
+      setAuth(data.user) 
+      console.log(data.user);
+      return <Navigate to="/"/>
+    }else if(data.status=401){
+      toast.error("Invalid Credential !!");
+    }else{
+      toast.warning("Internal Server Error!");
     }
-
-    alert("Please provide a valid username and token");
-  };
+    
+  }
 
   if(auth.user) return <Navigate to="/" />
   return (    
-    <form onSubmit={handleSubmitEvent}>
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        value={username} // Set initial and updated values
-        onChange={(e) => setUsername(e.target.value)} // Handle input changes
-      />
-      <input
-        name="token"
-        placeholder="Token"
-        value={token} // Set initial and updated values
-        onChange={(e) => setToken(e.target.value)} // Handle input changes
-      />
-      <button type="submit">Login</button>
-    </form>
-
+    
+    <div className="authContainer">
+      <h2>Welcome to Our TradingApp! <span>😊</span></h2>
+      <p>Please sign in to your account and start the adventure</p>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email"/>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password"/>
+        <button type="submit">Log in</button>
+      </form>
+      <p>New on our platform? <Link to={process.env.REACT_APP_URL+"/register"} className="create-account">Create an account</Link></p>
+    </div>
+    
   );
 }
 
